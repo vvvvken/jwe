@@ -150,7 +150,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 > _**step 6. 拼接以及序列号数据，得到JWE Object**_
 
 图示如下：
-![](http://upload-images.jianshu.io/upload_images/2709666-63bc2a404473f29f.png)
+![](asset/jwe_encrypt.png)
 
 #### 3.3 JWE加密完整实例
 
@@ -188,7 +188,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 
 图示如下：
 
-![](http://upload-images.jianshu.io/upload_images/2709666-eb1dc318363aba28.png)
+![](asset/jwe_gen_eg.png)
 
 #### 3.4 JWE解密过程
 
@@ -207,7 +207,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 > _**step 5. 拿到加密算法，用密钥对其解密**_
 
 图示如下：
-![](http://upload-images.jianshu.io/upload_images/2709666-cf84a96798cfbdd2.png)
+![](asset/jwe_decrypt.png)
 
 #### 3.5 JWE解密完整实例
 
@@ -236,7 +236,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 > 用AES128算法，对ciphertext解
 
 图解如下：
-![](http://upload-images.jianshu.io/upload_images/2709666-06eb7443b6207ace.png)
+![](asset/jwe_decrypt_eg.png)
 
 
 ## 4.JWE的本质
