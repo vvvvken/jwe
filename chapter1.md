@@ -1,4 +1,3 @@
-#【基础篇】(一)初始JWE-揭开JWE神秘面纱
 ## 1.疑问
 
 在正式介绍JWE之前，抛几个问题。之前跟使用过JWE的小伙伴聊天，问他们对JWE的了解，大致如下：
@@ -82,11 +81,11 @@ BASE64URL(JWE Authentication Tag)
 | JWE Encrypted Key | 加密后的密钥数据。有密钥的加密算法会涉及到，比如AES，RSA。 | 2进制 | 是 | 是 | |
 | JWE Initialization Vector | 向量数据。涉及到向量的加密算法才有此数据，比如：AES | 2进制 | 是 | 否 | |
 | JWE Ciphertext | 原始数据加密后的密文。 | 2进制 | 否 | 是 | |
-| JWE Authentication Tag | 签名数据，对JWE Encrypted Key+JWE Initialization Vector+JWE Ciphertext 整合数据的签名。比如SHA1、HMAC的签名结果。 | 2进制 | 否 | 是 | |
+| JWE Authentication Tag | 数字认证码，对JWE Encrypted Key+JWE Initialization Vector+JWE Ciphertext 整合数据的认证码 | 2进制 | 否 | 是 | |
 
 接下来可以简单的描述JWE数据结构：
 
-![](asset/jwe_content.png)
+![JWE内容结构](http://upload-images.jianshu.io/upload_images/2709666-5745c6c7e393a508.png)
 
 综上，我们了解了JWE产生的数据结构，接下来我们来看下怎样一步一步生成JWE的数据。
 
@@ -98,7 +97,7 @@ BASE64URL(JWE Authentication Tag)
 
 > 1. 原始报文的加密
 > 2. 密钥的加密
-> 3. 数字签名
+> 3. 数字认证码的生成
 
 在真正JWE处理的过程之前，我们必须把以上三种算法确定好。拿我们团队实践的算法来举例：
 
@@ -106,7 +105,7 @@ BASE64URL(JWE Authentication Tag)
 | :--- | :--- |
 | 原始报文的加密 | AES 128 |
 | 密钥的加密 | RSA PKCS1 |
-| 签名 | HMAC with SHA256 |
+| 签名 | HMAC-SHA256 |
 
 到了这里，有的童鞋肯定会问：
 
@@ -119,7 +118,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 | 字段名 | 描述 | 实例 | 实例说明 |
 | :--- | :--- | :--- | :--- |
 | alg | 用来描述密钥的加密算法 | {"alg":"RSA1\_5"} | 密钥加密算法为RSA,padding方式为：pkcs1-v1\_5 |
-| enc | 用来描述原始报文的加密算法和签名算法 | {"enc":"A128CBC-HS256"} | A128CBC：原始报文的加密算法为AES128，提供商为CBC。HS256：签名算法为HMAC With SHA256 |
+| enc | 用来描述原始报文的加密算法和签名算法 | {"enc":"A128CBC-HS256"} | A128CBC：原始报文的加密算法为AES128，操作模式为CBC。HS256：签名算法为HMAC With SHA256 |
 
 关于JWE Header的描述，更详尽的请查看：[http://self-issued.info/docs/draft-ietf-jose-json-web-encryption.html\#Header](http://self-issued.info/docs/draft-ietf-jose-json-web-encryption.html#Header)
 
@@ -143,12 +142,12 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 >
 > _**step 4. 加密原始报文，得到Cipher text**_
 >
-> _**step 5. 签名，得到Authentication Tag**_
+> _**step 5. 生成认证码，得到Authentication Tag**_
 >
 > _**step 6. 拼接以及序列号数据，得到JWE Object**_
 
 图示如下：
-![](asset/jwe_encrypt.png)
+![JWE加密过程](http://upload-images.jianshu.io/upload_images/2709666-ad7d88f0407e2d34.png)
 
 #### 3.3 JWE加密完整实例
 
@@ -176,9 +175,9 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 >
 > 利用step2的密钥 和 step3的向量数据，用AES\(CBC\)128加密
 >
-> _**step 5. 签名，得到Authentication Tag**_
+> _**step 5. 生成认证码，得到Authentication Tag**_
 >
-> 把step2的加密密钥、step3的向量、step4的密文 进行拼接，然后用HMAC With SHA256 算法进行签名
+> 把step2的加密密钥、step3的向量、step4的密文 进行拼接，然后用HMAC-SHA256 算法进行签名
 >
 > _**step 6. 拼接以及序列号数据，得到JWE Object**_
 >
@@ -186,7 +185,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 
 图示如下：
 
-![](asset/jwe_gen_eg.png)
+![JWE加密实例](http://upload-images.jianshu.io/upload_images/2709666-e849c7278a8f8a1c.png)
 
 #### 3.4 JWE解密过程
 
@@ -196,7 +195,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 >
 > _**step 2. 解析JWEHeader，得到具体的算法**_
 >
-> _**step 3. 拿到签名算法，进行签名校验**_
+> _**step 3. 拿到数字认证算法，进行数字认证**_
 >
 > _**step 4. 对Encrypted Key进行解密，得到密钥明文**_
 >
@@ -205,7 +204,8 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 > _**step 5. 拿到加密算法，用密钥对其解密**_
 
 图示如下：
-![](asset/jwe_decrypt.png)
+
+![JWE解密过程](http://upload-images.jianshu.io/upload_images/2709666-bd39e1543e77f8f6.png)
 
 #### 3.5 JWE解密完整实例
 
@@ -215,9 +215,9 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 >
 > _**step 2. 解析JWEHeader，得到具体的算法**_
 >
-> Header的数据为{"alg":"RSA1\_5","enc":"A128CBC-HS256"}，密钥加密算法为RSAPKCS1-V1\_5，报文加密算法为 AES128，签名算法为HMAC With SHA256.
+> Header的数据为{"alg":"RSA1\_5","enc":"A128CBC-HS256"}，密钥加密算法为RSAPKCS1-V1\_5，报文加密算法为 AES128，签名算法为HMAC-SHA256.
 >
-> _**step 3. 拿到签名算法，进行签名校验**_
+> _**step 3. 拿到数字认证算法，进行数字认证**_
 >
 > 通过HMAC With SHA256验证签名。
 >
@@ -234,7 +234,7 @@ BINGO！JWE设计的时候，为了支持这种灵活的扩展，JWE的Header里
 > 用AES128算法，对ciphertext解
 
 图解如下：
-![](asset/jwe_decrypt_eg.png)
+![JWE解密实例](http://upload-images.jianshu.io/upload_images/2709666-6ebeba0297361ca4.png)
 
 
 ## 4.JWE的本质
